@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Text Analysis</title>
+    <link rel="stylesheet" href="https://cdn3.devexpress.com/jslib/22.2.8/css/dx.light.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn3.devexpress.com/jslib/22.2.8/js/dx.all.js"></script>
+    <style>
+        #container {
+            margin: 20px;
+        }
+
+        #results {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="container">
+        <h1>Text Analysis System</h1>
+        <form id="uploadForm">
+            <textarea id="textInput" rows="6" cols="60" placeholder="Enter text here..."></textarea><br>
+            <label for="analysisType">Select analysis:</label>
+            <select id="analysisType">
+                <option value="pattern1">Riječi dužine 5 znakova.</option>
+                <option value="pattern2">Pronalazi obrasce slične SSN (npr. 123-45-6789).</option>
+                <option value="pattern3">Pronalazi email adrese.</option>
+                <option value="pattern4">Pronalazi URL-ove.</option>
+                <option value="pattern5">Pronalazi datume u formatu YYYY-MM-DD.</option>
+                <option value="pattern6">Pronalazi brojeve telefona u formatu (123) 456-7890.</option>
+                <option value="pattern7">Pronalazi heksadecimalne boje u formatu #RRGGBB.</option>
+                <option value="pattern8">Pronalazi brojeve u formatu 1,000.00.</option>
+                <option value="pattern9">Pronalazi dane u formatu 01/01/2024.</option>
+                <option value="pattern10">Pronalazi riječi s početnim velikim slovom.</option>
+            </select>
+
+            <button type="submit">Submit</button>
+        </form>
+        <div id="results">
+            <h2>Results:</h2>
+            <pre id="resultOutput"></pre>
+        </div>
+    </div>
+    <script>
+        $(document).ready(function () {
+            $('#uploadForm').submit(function (event) {
+                event.preventDefault();
+                const text = $('#textInput').val();
+                const analysisType = $('#analysisType').val();
+
+                console.log("Text:", text);  // Debugging
+                console.log("Analysis Type:", analysisType);  // Debugging
+
+                // Send data to master server
+                $.ajax({
+                    url: 'http://localhost:8000/process',
+                    method: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({ text, analysisType }),
+                    success: function (data) {
+                        $('#resultOutput').text(JSON.stringify(data, null, 2));
+                    },
+                    error: function (jqXHR, textStatus, errorThrown) {
+                        console.error('Request failed:', textStatus, errorThrown);
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+
+</html>
