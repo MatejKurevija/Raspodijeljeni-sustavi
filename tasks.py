@@ -15,16 +15,7 @@ from sites_config import SITES
 # 1. Glavna funkcija: execute_task
 # ===================================
 def execute_task(task):
-    """
-    Prema `task.type`, delegira se na:
-      - 'count_primes'
-      - 'reverse'
-      - 'uppercase'
-      - 'scrape'
-      - 'scrape_url'
-      - 'compare_offers'
-      - 'compare_skin_offers'
-    """
+
     try:
         if task.type == 'count_primes':
             n = int(task.parameters)
@@ -158,14 +149,7 @@ def compare_offers(product_name: str):
 
 
 def scrape_site(search_url: str, cfg: dict, full_phrase: str, keywords: list):
-    """
-    Generički scraper koji koristi konfiguraciju iz sites_config.py:
-      - cfg["item_selector"]    → ime CSS klase za svaki rezultat (bez točke)
-      - cfg["title_attr"]       → atribut u kojem je title
-      - cfg["title_in_span"]    → ako je naziv unutar <span>
-      - cfg["price_selector"]   → ime CSS klase za element s cijenom (bez točke)
-      - cfg["url_prefix"]       → prefix za href (ako href nije apsolutni)
-    """
+
     try:
         resp = requests.get(search_url, timeout=10)
         resp.raise_for_status()
