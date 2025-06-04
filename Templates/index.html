@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Distributed System - Leader Dashboard</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+    }
+    h1 {
+      margin-bottom: 10px;
+    }
+    form {
+      margin-bottom: 20px;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      max-width: 600px;
+    }
+    form label {
+      display: inline-block;
+      width: 120px;
+      font-weight: bold;
+    }
+    form select, form input[type="text"], form button {
+      padding: 6px;
+      font-size: 14px;
+      margin-bottom: 10px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 30px;
+    }
+    table, th, td {
+      border: 1px solid #ccc;
+    }
+    th, td {
+      padding: 8px;
+      text-align: left;
+      font-size: 14px;
+    }
+    th {
+      background-color: #f0f0f0;
+    }
+    tr:nth-child(even) {
+      background-color: #fafafa;
+    }
+    .best-offer {
+      background-color: #e0ffe0; /* lagano zelena za najbolju */
+    }
+    .status-pending {
+      color: gray;
+      font-weight: bold;
+    }
+    .status-in_progress {
+      color: orange;
+      font-weight: bold;
+    }
+    .status-completed, .status-finished {
+      color: green;
+      font-weight: bold;
+    }
+    .status-error {
+      color: red;
+      font-weight: bold;
+    }
+    .worker-alive {
+      color: green;
+      font-weight: bold;
+    }
+    .worker-offline {
+      color: red;
+      font-weight: bold;
+    }
+    .offer-link {
+      text-decoration: none;
+      color: #0066cc;
+    }
+    .offer-link:hover {
+      text-decoration: underline;
+    }
+    code {
+      white-space: pre-wrap;
+      font-size: 13px;
+      background: #f9f9f9;
+      padding: 4px;
+      border-radius: 3px;
+      display: block;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Leader Dashboard</h1>
+
+  <!-- =============================== -->
+  <!-- 1. FORM ZA NOVI ZADATAK          -->
+  <!-- =============================== -->
+  <form id="task-form">
+    <label for="task-type">Task Type:</label>
+    <select id="task-type" name="task_type" required>
+      <option value="" disabled selected>-- odaberi tip zadatka --</option>
+      <option value="count_primes">count_primes</option>
+      <option value="reverse">reverse</option>
+      <option value="uppercase">uppercase</option>
+      <option value="scrape">scrape (URL)</option>
+      <option value="compare_offers">compare_offers (e-trgovine)</option>
+      <option value="compare_skin_offers">compare_skin_offers (CS2 skinevi)</option>
+    </select>
+    <br />
+
+    <label for="task-params">Parameters:</label>
+    <input type="text" id="task-params" name="parameters" placeholder="npr. 'logitech g pro x2' ili 'AK-47 | Redline'" style="width:400px;" required />
+    <br />
+
+    <button type="submit">Add Task</button>
+  </form>
+
+
+  <!-- ================================================= -->
+  <!-- 2. TABLICA ZADATAKA (Tasks)                       -->
+  <!-- ================================================= -->
+  <h2>Zadaci</h2>
+  <table id="tasks-table">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Tip zadatka</th>
+        <th>Parametri</th>
+        <th>Status</th>
+        <th>Worker</th>
+        <th>Result</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for task in tasks %}
+        <tr data-task-id="{{ task.id }}">
+          <td>{{ task.id }}</td>
+          <td>{{ task.type }}</td>
+          <td>{{ task.parameters }}</td>
+          <td class="status-{{ task.status }}">{{ task.status }}</td>
+          <td>{{ task.worker_id or "" }}</td>
+          <td>
+            {% if task.parsed_result and task.type == "compare_offers" %}
+              {# Ispis za compare_offers (ostaje nepromijenjeno) #}
+              {% set offers = task.parsed_result["offers"] %}
+              {% set best_site = task.parsed_result["best"] %}
+              <ul style="list-style: none; padding-left: 0; margin: 0;">
+                {% for offer in offers %}
+                  {% set is_best = (offer.site == best_site) %}
+                  <li class="{% if is_best %}best-offer{% endif %}" style="padding: 4px 0;">
+                    <strong>{{ offer.site }}:</strong>
+                    <a href="{{ offer.url }}" class="offer-link" target="_blank">
+                      {{ offer.price }} €
+                    </a>
+                    {% if is_best %}
+                      &nbsp;<em>(najbolja)</em>
+                    {% endif %}
+                  </li>
+                {% endfor %}
+              </ul>
+
+            {% elif task.parsed_result and task.type == "compare_skin_offers" %}
+              {# Samo najjeftinija ponuda bez prosjeka #}
+              {% set best = task.parsed_result["best"] %}
+              {% if best %}
+                <div class="best-offer" style="padding:4px; border-radius:4px;">
+                  <strong>Najjeftinija ponuda:</strong>
+                  <br />
+                  <strong>{{ best.site }}:</strong>
+                  <a href="{{ best.url }}" class="offer-link" target="_blank">
+                    {{ best.market_price }} €
+                  </a>
+                </div>
+              {% else %}
+                <div><em>Nema ponuda</em></div>
+              {% endif %}
+
+            {% else %}
+              {# Ostali tipovi zadataka (count_primes, reverse, ...) #}
+              {% if task.result %}
+                <code>{{ task.result }}</code>
+              {% endif %}
+            {% endif %}
+          </td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+
+  <!-- ================================================= -->
+  <!-- 3. TABLICA WORKERA (Workers)                       -->
+  <!-- ================================================= -->
+  <h2>Workeri</h2>
+  <table id="workers-table">
+    <thead>
+      <tr>
+        <th>Worker ID</th>
+        <th>Status</th>
+        <th>Last Seen</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for w in workers %}
+        <tr data-worker-id="{{ w.worker_id }}">
+          <td>{{ w.worker_id }}</td>
+          <td class="worker-{{ "alive" if w.status == "Alive" else "offline" }}">
+            {{ w.status }}
+          </td>
+          <td>{{ w.last_seen }}</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+
+  <!-- ================================================= -->
+  <!-- 4. JAVASCRIPT ZA AUTOMATSKI UPDATE TABLICA         -->
+  <!-- ================================================= -->
+  <script>
+    // Helper za kreiranje retka zadatka
+    function buildTaskRow(task) {
+      let statusClass = "status-" + task.status;
+      let workerId = task.worker_id || "";
+      let resultHTML = "";
+
+      try {
+        const parsed = JSON.parse(task.result);
+
+        if (task.type === "compare_offers") {
+          const offers = parsed.offers;
+          const best = parsed.best;
+          resultHTML += "<ul style='list-style:none;padding-left:0;margin:0;'>";
+          offers.forEach(offer => {
+            const isBest = (offer.site === best);
+            resultHTML += `<li class="${isBest ? "best-offer" : ""}" style="padding:4px 0;">`
+                        + `<strong>${offer.site}:</strong> `
+                        + `<a href="${offer.url}" class="offer-link" target="_blank">${offer.price} €</a>`
+                        + (isBest ? " <em>(najbolja)</em>" : "")
+                        + `</li>`;
+          });
+          resultHTML += "</ul>";
+
+        } else if (task.type === "compare_skin_offers") {
+          const best = parsed.best;
+          if (best) {
+            resultHTML += `<div class="best-offer" style="padding:4px; border-radius:4px;">`
+                       + `<strong>Najjeftinija ponuda:</strong><br/>`
+                       + `<strong>${best.site}:</strong> `
+                       + `<a href="${best.url}" class="offer-link" target="_blank">${best.market_price} €</a>`
+                       + `</div>`;
+          } else {
+            resultHTML += `<div><em>Nema ponuda</em></div>`;
+          }
+
+        } else {
+          // Ostali tipovi zadataka: samo sirovi tekst
+          resultHTML = `<code>${task.result}</code>`;
+        }
+      } catch (e) {
+        // Ako nije validan JSON ili nema parsed_result
+        if (task.result) {
+          resultHTML = `<code>${task.result}</code>`;
+        }
+      }
+
+      return `
+        <tr data-task-id="${task.id}">
+          <td>${task.id}</td>
+          <td>${task.type}</td>
+          <td>${task.parameters}</td>
+          <td class="${statusClass}">${task.status}</td>
+          <td>${workerId}</td>
+          <td>${resultHTML}</td>
+        </tr>
+      `;
+    }
+
+    // Helper za kreiranje retka workera
+    function buildWorkerRow(worker) {
+      let cls = (worker.status === "Alive") ? "worker-alive" : "worker-offline";
+      return `
+        <tr data-worker-id="${worker.worker_id}">
+          <td>${worker.worker_id}</td>
+          <td class="${cls}">${worker.status}</td>
+          <td>${worker.last_seen}</td>
+        </tr>
+      `;
+    }
+
+    // Funkcija za dohvat statusa
+    function refreshStatus() {
+      fetch("/api/status")
+        .then(resp => resp.json())
+        .then(json => {
+          // Ažuriranje tablice zadataka
+          const taskBody = document.querySelector("#tasks-table tbody");
+          let newTasksHtml = "";
+          json.tasks.forEach(task => {
+            newTasksHtml += buildTaskRow(task);
+          });
+          taskBody.innerHTML = newTasksHtml;
+
+          // Ažuriranje tablice workera
+          const workerBody = document.querySelector("#workers-table tbody");
+          let newWorkersHtml = "";
+          json.workers.forEach(w => {
+            newWorkersHtml += buildWorkerRow(w);
+          });
+          workerBody.innerHTML = newWorkersHtml;
+        })
+        .catch(err => {
+          console.error("Error fetching /api/status:", err);
+        });
+    }
+
+    // Slanje novog zadatka (HTML forma)
+    document.getElementById("task-form").addEventListener("submit", function(e) {
+      e.preventDefault();
+      const type = document.getElementById("task-type").value;
+      const params = document.getElementById("task-params").value.trim();
+      if (!type || !params) {
+        alert("Molim odaberi tip i unesi parametre.");
+        return;
+      }
+
+      fetch("/api/add_task", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type: type, parameters: params })
+      })
+      .then(resp => resp.json())
+      .then(data => {
+        if (data.success) {
+          refreshStatus();
+          document.getElementById("task-params").value = "";
+        } else {
+          alert("Greška pri dodavanju zadatka: " + data.error);
+        }
+      })
+      .catch(err => {
+        console.error("Error adding task:", err);
+        alert("Greška pri komunikaciji sa serverom.");
+      });
+    });
+
+    // Nakon učitavanja stranice, osvježavaj tablice svake 5 sekundi
+    document.addEventListener("DOMContentLoaded", function() {
+      refreshStatus();
+      setInterval(refreshStatus, 5000);
+    });
+  </script>
+</body>
+</html>
