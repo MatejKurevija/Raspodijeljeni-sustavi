@@ -12,16 +12,7 @@ from election import election
 from tasks import execute_task
 
 def worker_process(worker_id):
-    """
-    Worker:
-    1) Registrira se u WorkerStatus s vlastitim ID-jem
-    2) Svakih HEARTBEAT_INTERVAL sekundi ažurira last_seen
-    3) Svakih STATUS_PRINT_INTERVAL sekundi ispiše "Alive/Idle" ili "Processing"
-    4) Provjerava je li lider živ; ako nije, pokreće election()
-    5) Preuzima pending zadatke, izvršava ih (execute_task) i ažurira status/result
-    6) U slučaju da 'scrape' zadatak podijeli posao na pod‐zadatke 'scrape_url'
-    7) Ako padne (ne šalje heartbeat), lider ga izbriše, a ostali radnici sami nastavljaju
-    """
+
     init_db()
     session = SessionLocal()
     print(f"[Worker {worker_id}] Pokrećem se...")
