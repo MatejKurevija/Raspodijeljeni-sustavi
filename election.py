@@ -4,13 +4,7 @@ from datetime import datetime
 from models import WorkerStatus, LeaderStatus
 
 def election(session, my_id):
-    """
-    Jednostavna procedura izbora novog lidera:
-    1) Dohvati sve radnike iz WorkerStatus koji su ažurirali last_seen unutar WORKER_TIMEOUT
-    2) U listu kandidata stavi sve te ID-jeve + my_id
-    3) Sortiraj leksički i onaj s najvišim ID postaje lider
-    4) Ako je to my_id, onda ažuriraj LeaderStatus (preuzmi liderstvo)
-    """
+
     from utils import WORKER_TIMEOUT
 
     now = datetime.utcnow()
