@@ -41,12 +41,7 @@ def initialize_leader():
 
 @app.route("/", methods=["GET", "POST"])
 def index():
-    """
-    GET /:
-      - Dohvati tasks i workere iz baze i renderaj frontend (index.html).
-    POST /:
-      - Dodaj novi Task (preuzet iz HTML forme), zatim redirect na GET /.
-    """
+
     if request.method == "POST":
         task_type = request.form.get("task_type")
         params = request.form.get("parameters")
@@ -106,15 +101,7 @@ def index():
 
 @app.route("/api/add_task", methods=["POST"])
 def api_add_task():
-    """
-    POST /api/add_task
-    Prima JSON:
-      { "type": "<task_type>", "parameters": "<parametri>" }
-    Kreira novi Task sa status="pending" i vraća:
-      { "success": True, "task_id": <id> }
-    ili:
-      { "success": False, "error": "<poruka>" }
-    """
+
     data = request.get_json()
     if not data:
         return jsonify({ "success": False, "error": "Prazan JSON payload." }), 400
@@ -147,20 +134,6 @@ def api_add_task():
 
 @app.route("/api/status", methods=["GET"])
 def api_status():
-    """
-    GET /api/status
-    Vraća JSON s trenutačnim stanjem svih Tasks i WorkerStatus redova:
-    {
-      "tasks": [
-        { "id": 1, "type": "...", "parameters": "...", "status": "...",
-          "worker_id": 2, "result": "..." }, ...
-      ],
-      "workers": [
-        { "worker_id": 1, "status": "Alive", "last_seen": "2025-06-05T15:00:00" },
-        ...
-      ]
-    }
-    """
     session = SessionLocal()
     try:
         # Dohvati sve zadatke
@@ -197,10 +170,7 @@ def api_status():
 
 
 def send_heartbeat(my_id: str):
-    """
-    Pozadinski thread: svaki put kad prođe HEARTBEAT_INTERVAL, ažurira
-    LeaderStatus.last_seen za ovog lidera. Ako izgubi polje, prekida se.
-    """
+
     while True:
         time.sleep(HEARTBEAT_INTERVAL)
         session = SessionLocal()
@@ -217,11 +187,7 @@ def send_heartbeat(my_id: str):
 
 
 def monitor_workers():
-    """
-    Pozadinski thread: svaki put kad prođe HEARTBEAT_INTERVAL, provjerava
-    je li neki worker „umro”. Ako jest, vraća njegove zadatke na pending
-    i briše WorkerStatus red.
-    """
+WorkerStatus red.
     while True:
         time.sleep(HEARTBEAT_INTERVAL)
         now_check = datetime.utcnow()
@@ -250,12 +216,7 @@ def monitor_workers():
 
 
 def leader_process(flask_port=5000):
-    """
-    Glavna funkcija za lidera:
-      1. initialize_leader() – postavi LeaderStatus
-      2. pokreni threadove send_heartbeat() i monitor_workers()
-      3. pokreni Flask server na portu flask_port
-    """
+
     my_id = initialize_leader()
 
     heartbeat_thread = threading.Thread(target=send_heartbeat, args=(my_id,), daemon=True)
