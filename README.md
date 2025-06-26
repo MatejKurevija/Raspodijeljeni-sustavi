@@ -58,7 +58,7 @@ Ovaj projekt implementira jednostavan distribuirani sustav:
 
 ##  Pokretanje s Docker Compose
 
-1. **Ugasi i obriši stare kontejnere/volume**  
+1. **Ugasit i obrisat stare kontejnere/volume**  
    ```bash
    docker-compose down -v
 2.	Buildaj image
@@ -73,7 +73,7 @@ Ovaj projekt implementira jednostavan distribuirani sustav:
 http://localhost:5000
 ________________________________________
  Konfiguracija broja radnika
-U main.py promijeni:
+U main.py promijena:
 NUM_WORKERS = 3
 na željeni broj (npr. 5), pa ponovo:
 docker-compose build
@@ -87,17 +87,17 @@ ________________________________________
 •	Web UI: dodaj zadatke i prat i status
 •	/api/status: vraća JSON sa zadacima i radnicima
 •	/api/add_task: POST { type, parameters }
-•	/api/kill/<worker_id>: POST za test noću
+•	/api/kill/<worker_id>: POST za test
 ________________________________________
  Failover testiranje
 1.	Ubij lidera:
 2.	curl -X POST http://localhost:5000/api/kill/w1
-3.	U logu vidiš:
+3.	U logu:
 4.	[Worker w1] stopping
 5.	[Monitor] Worker w1 died → restarting
 6.	[Worker w1] started
 7.	[Election] Leader w1 dead → new leader: w2
-8.	U UI-ju osvježi — Trenutni lider: postalo w2.
+8.	U UI-ju — Trenutni lider: postalo w2.
 ________________________________________
  Čišćenje baze
 docker-compose down -v
