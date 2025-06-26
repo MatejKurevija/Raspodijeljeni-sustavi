@@ -2,102 +2,140 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Distributed System - Leader Dashboard</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 20px;
-    }
-    h1 {
-      margin-bottom: 10px;
-    }
-    form {
-      margin-bottom: 20px;
-      padding: 10px;
-      border: 1px solid #ccc;
-      border-radius: 4px;
-      max-width: 600px;
-    }
-    form label {
-      display: inline-block;
-      width: 120px;
-      font-weight: bold;
-    }
-    form select, form input[type="text"], form button {
-      padding: 6px;
-      font-size: 14px;
-      margin-bottom: 10px;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-bottom: 30px;
-    }
-    table, th, td {
-      border: 1px solid #ccc;
-    }
-    th, td {
-      padding: 8px;
-      text-align: left;
-      font-size: 14px;
-    }
-    th {
-      background-color: #f0f0f0;
-    }
-    tr:nth-child(even) {
-      background-color: #fafafa;
-    }
-    .best-offer {
-      background-color: #e0ffe0; /* lagano zelena za najbolju */
-    }
-    .status-pending {
-      color: gray;
-      font-weight: bold;
-    }
-    .status-in_progress {
-      color: orange;
-      font-weight: bold;
-    }
-    .status-completed, .status-finished {
-      color: green;
-      font-weight: bold;
-    }
-    .status-error {
-      color: red;
-      font-weight: bold;
-    }
-    .worker-alive {
-      color: green;
-      font-weight: bold;
-    }
-    .worker-offline {
-      color: red;
-      font-weight: bold;
-    }
-    .offer-link {
-      text-decoration: none;
-      color: #0066cc;
-    }
-    .offer-link:hover {
-      text-decoration: underline;
-    }
-    code {
-      white-space: pre-wrap;
-      font-size: 13px;
-      background: #f9f9f9;
-      padding: 4px;
-      border-radius: 3px;
-      display: block;
-    }
-  </style>
+  <title>Distributed System – Leader Dashboard</title>
+<style>
+  /* Global */
+  body {
+    font-family: Arial, sans-serif;
+    margin: 20px;
+    background: #f7f8fa;
+    color: #333;
+  }
+  h1, h2 {
+    margin-bottom: 10px;
+    color: #2c3e50;
+  }
+
+  /* Form */
+  form {
+    margin-bottom: 20px;
+    padding: 12px 16px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    max-width: 600px;
+    background: #fff;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  }
+  form label {
+    display: inline-block;
+    width: 120px;
+    font-weight: bold;
+    color: #34495e;
+  }
+  form select,
+  form input[type="text"] {
+    padding: 6px;
+    font-size: 14px;
+    margin-bottom: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    transition: border-color .2s;
+  }
+  form select:focus,
+  form input[type="text"]:focus {
+    border-color: #5dade2;
+    outline: none;
+  }
+  form button {
+    padding: 6px 12px;
+    font-size: 14px;
+    margin-bottom: 10px;
+    background: #5dade2;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background .2s;
+  }
+  form button:hover {
+    background: #3498db;
+  }
+
+  /* Tables */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 30px;
+    background: #fff;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    border-radius: 6px;
+    overflow: hidden;
+  }
+  table, th, td {
+    border: 1px solid #ddd;
+  }
+  th, td {
+    padding: 10px;
+    text-align: left;
+    font-size: 14px;
+  }
+  th {
+    background-color: #f0f0f0;
+    color: #2c3e50;
+  }
+  tr:nth-child(even) {
+    background-color: #fafafa;
+  }
+  tr:hover {
+    background-color: #f5f5f5;
+  }
+
+  /* Highlight best offer */
+  .best-offer {
+    background-color: #e0ffe0;
+    border-left: 4px solid #27ae60;
+  }
+
+  /* Status styles */
+  .status-pending     { color: gray;    font-weight: bold; }
+  .status-in_progress { color: orange;  font-weight: bold; }
+  .status-completed,
+  .status-finished    { color: green;   font-weight: bold; }
+  .status-error       { color: red;     font-weight: bold; }
+
+  /* Worker status */
+  .worker-alive       { color: green;   font-weight: bold; }
+  .worker-offline     { color: red;     font-weight: bold; }
+
+  /* Offer links */
+  .offer-link {
+    text-decoration: none;
+    color: #0066cc;
+    transition: color .2s;
+  }
+  .offer-link:hover {
+    color: #004a99;
+  }
+
+  /* Code blocks */
+  code {
+    display: block;
+    background: #f9f9f9;
+    padding: 6px;
+    border-radius: 4px;
+    font-size: 13px;
+    border: 1px solid #e0e0e0;
+    white-space: pre-wrap;
+  }
+</style>
+
 </head>
 <body>
 
   <h1>Leader Dashboard</h1>
+  <p><strong>Trenutni lider:</strong> {{ leader or "nema lidera" }}</p>
 
-  <!-- =============================== -->
-  <!-- 1. FORM ZA NOVI ZADATAK          -->
-  <!-- =============================== -->
+  <!-- 1) FORM -->
   <form id="task-form">
     <label for="task-type">Task Type:</label>
     <select id="task-type" name="task_type" required>
@@ -107,251 +145,184 @@
       <option value="uppercase">uppercase</option>
       <option value="scrape">scrape (URL)</option>
       <option value="compare_offers">compare_offers (e-trgovine)</option>
-      <option value="compare_skin_offers">compare_skin_offers (CS2 skinevi)</option>
-    </select>
-    <br />
-
+      <option value="compare_skin_offers">compare_skin_offers (CS2 skinovi)</option>
+    </select><br/>
     <label for="task-params">Parameters:</label>
-    <input type="text" id="task-params" name="parameters" placeholder="npr. 'logitech g pro x2' ili 'AK-47 | Redline'" style="width:400px;" required />
-    <br />
-
+    <input type="text" id="task-params" name="parameters"
+           placeholder="npr. 'Iphone 16'" style="width:400px;" required /><br/>
     <button type="submit">Add Task</button>
   </form>
 
-
-  <!-- ================================================= -->
-  <!-- 2. TABLICA ZADATAKA (Tasks)                       -->
-  <!-- ================================================= -->
+  <!-- 2) TASKS TABLE -->
   <h2>Zadaci</h2>
   <table id="tasks-table">
     <thead>
       <tr>
-        <th>ID</th>
-        <th>Tip zadatka</th>
-        <th>Parametri</th>
-        <th>Status</th>
-        <th>Worker</th>
-        <th>Result</th>
+        <th>ID</th><th>Tip zadatka</th><th>Parametri</th><th>Status</th><th>Worker</th><th>Result</th>
       </tr>
     </thead>
     <tbody>
       {% for task in tasks %}
-        <tr data-task-id="{{ task.id }}">
-          <td>{{ task.id }}</td>
-          <td>{{ task.type }}</td>
-          <td>{{ task.parameters }}</td>
-          <td class="status-{{ task.status }}">{{ task.status }}</td>
-          <td>{{ task.worker_id or "" }}</td>
-          <td>
-            {% if task.parsed_result and task.type == "compare_offers" %}
-              {# Ispis za compare_offers (ostaje nepromijenjeno) #}
-              {% set offers = task.parsed_result["offers"] %}
-              {% set best_site = task.parsed_result["best"] %}
-              <ul style="list-style: none; padding-left: 0; margin: 0;">
-                {% for offer in offers %}
-                  {% set is_best = (offer.site == best_site) %}
-                  <li class="{% if is_best %}best-offer{% endif %}" style="padding: 4px 0;">
-                    <strong>{{ offer.site }}:</strong>
-                    <a href="{{ offer.url }}" class="offer-link" target="_blank">
-                      {{ offer.price }} €
-                    </a>
-                    {% if is_best %}
-                      &nbsp;<em>(najbolja)</em>
-                    {% endif %}
-                  </li>
-                {% endfor %}
-              </ul>
-
-            {% elif task.parsed_result and task.type == "compare_skin_offers" %}
-              {# Samo najjeftinija ponuda bez prosjeka #}
-              {% set best = task.parsed_result["best"] %}
-              {% if best %}
-                <div class="best-offer" style="padding:4px; border-radius:4px;">
-                  <strong>Najjeftinija ponuda:</strong>
-                  <br />
-                  <strong>{{ best.site }}:</strong>
-                  <a href="{{ best.url }}" class="offer-link" target="_blank">
-                    {{ best.market_price }} €
-                  </a>
-                </div>
-              {% else %}
-                <div><em>Nema ponuda</em></div>
-              {% endif %}
-
+      <tr data-task-id="{{ task.id }}">
+        <td>{{ task.id }}</td>
+        <td>{{ task.type }}</td>
+        <td>{{ task.parameters }}</td>
+        <td class="status-{{ task.status }}">{{ task.status }}</td>
+        <td>{{ task.worker_id or "" }}</td>
+        <td>
+          {% if task.parsed and task.type == "compare_offers" %}
+            {% set offers = task.parsed["offers"] %}
+            {% set best = task.parsed["best"] %}
+            <ul style="list-style:none;padding-left:0;margin:0;">
+            {% for o in offers %}
+              {% set highlight = (o.site == best) %}
+              <li class="{% if highlight %}best-offer{% endif %}" style="padding:4px 0;">
+                <strong>{{ o.site }}:</strong>
+                <a href="{{ o.url }}" class="offer-link" target="_blank">
+                  {{ "%.2f"|format(o.price) }} €
+                </a>
+                {% if highlight %}&nbsp;<em>(najbolja)</em>{% endif %}
+              </li>
+            {% endfor %}
+            </ul>
+          {% elif task.parsed and task.type == "compare_skin_offers" %}
+            {% set b = task.parsed["best"] %}
+            {% if b %}
+              <div class="best-offer" style="padding:4px;border-radius:4px;">
+                <strong>Najjeftinija ponuda:</strong><br/>
+                <strong>{{ b.site }}:</strong>
+                <a href="{{ b.url }}" class="offer-link" target="_blank">
+                  {{ "%.2f"|format(b.market_price) }} €
+                </a>
+              </div>
             {% else %}
-              {# Ostali tipovi zadataka (count_primes, reverse, ...) #}
-              {% if task.result %}
-                <code>{{ task.result }}</code>
-              {% endif %}
+              <div><em>Nema ponuda</em></div>
             {% endif %}
-          </td>
-        </tr>
+          {% else %}
+            {% if task.result %}
+              <code>{{ task.result }}</code>
+            {% endif %}
+          {% endif %}
+        </td>
+      </tr>
       {% endfor %}
     </tbody>
   </table>
 
-
-  <!-- ================================================= -->
-  <!-- 3. TABLICA WORKERA (Workers)                       -->
-  <!-- ================================================= -->
+  <!-- 3) WORKERS TABLE -->
   <h2>Workeri</h2>
   <table id="workers-table">
     <thead>
-      <tr>
-        <th>Worker ID</th>
-        <th>Status</th>
-        <th>Last Seen</th>
-      </tr>
+      <tr><th>Worker ID</th><th>Status</th><th>Last Seen</th></tr>
     </thead>
     <tbody>
       {% for w in workers %}
-        <tr data-worker-id="{{ w.worker_id }}">
-          <td>{{ w.worker_id }}</td>
-          <td class="worker-{{ "alive" if w.status == "Alive" else "offline" }}">
-            {{ w.status }}
-          </td>
-          <td>{{ w.last_seen }}</td>
-        </tr>
+      <tr data-worker-id="{{ w.worker_id }}">
+        <td>{{ w.worker_id }}</td>
+        <td class="worker-{{ "alive" if w.status=="Alive" else "offline" }}">{{ w.status }}</td>
+        <td>{{ w.last_seen }}</td>
+      </tr>
       {% endfor %}
     </tbody>
   </table>
 
-
-  <!-- ================================================= -->
-  <!-- 4. JAVASCRIPT ZA AUTOMATSKI UPDATE TABLICA         -->
-  <!-- ================================================= -->
+  <!-- 4) JAVASCRIPT AJAX REFRESH -->
   <script>
-    // Helper za kreiranje retka zadatka
     function buildTaskRow(task) {
-      let statusClass = "status-" + task.status;
-      let workerId = task.worker_id || "";
-      let resultHTML = "";
-
+      let html = "";
       try {
-        const parsed = JSON.parse(task.result);
-
+        const p = JSON.parse(task.result);
         if (task.type === "compare_offers") {
-          const offers = parsed.offers;
-          const best = parsed.best;
-          resultHTML += "<ul style='list-style:none;padding-left:0;margin:0;'>";
-          offers.forEach(offer => {
-            const isBest = (offer.site === best);
-            resultHTML += `<li class="${isBest ? "best-offer" : ""}" style="padding:4px 0;">`
-                        + `<strong>${offer.site}:</strong> `
-                        + `<a href="${offer.url}" class="offer-link" target="_blank">${offer.price} €</a>`
-                        + (isBest ? " <em>(najbolja)</em>" : "")
-                        + `</li>`;
-          });
-          resultHTML += "</ul>";
-
-        } else if (task.type === "compare_skin_offers") {
-          const best = parsed.best;
-          if (best) {
-            resultHTML += `<div class="best-offer" style="padding:4px; border-radius:4px;">`
-                       + `<strong>Najjeftinija ponuda:</strong><br/>`
-                       + `<strong>${best.site}:</strong> `
-                       + `<a href="${best.url}" class="offer-link" target="_blank">${best.market_price} €</a>`
-                       + `</div>`;
+          const valid = p.offers.filter(o => typeof o.price === "number" && isFinite(o.price));
+          if (valid.length === 0) {
+            html = `<div><em>Nema ponuda</em></div>`;
           } else {
-            resultHTML += `<div><em>Nema ponuda</em></div>`;
+            html = "<ul style='list-style:none;padding-left:0;margin:0;'>";
+            valid.forEach(o => {
+              const isBest = (o.site === p.best);
+              html += `<li class="${isBest?'best-offer':''}" style="padding:4px 0;">`
+                   +  `<strong>${o.site}:</strong> `
+                   +  `<a href="${o.url}" class="offer-link" target="_blank">`
+                   +    `${o.price.toFixed(2)} €`
+                   +  `</a>`
+                   +  (isBest ? " <em>(najbolja)</em>" : "")
+                   +  `</li>`;
+            });
+            html += "</ul>";
           }
-
+        } else if (task.type === "compare_skin_offers") {
+          const b = p.best;
+          if (b) {
+            html = `<div class="best-offer" style="padding:4px;border-radius:4px;">
+                      <strong>Najjeftinija ponuda:</strong><br/>
+                      <strong>${b.site}:</strong>
+                      <a href="${b.url}" class="offer-link" target="_blank">
+                        ${b.market_price.toFixed(2)} €
+                      </a>
+                    </div>`;
+          } else {
+            html = `<div><em>Nema ponuda</em></div>`;
+          }
         } else {
-          // Ostali tipovi zadataka: samo sirovi tekst
-          resultHTML = `<code>${task.result}</code>`;
+          html = `<code>${task.result}</code>`;
         }
-      } catch (e) {
-        // Ako nije validan JSON ili nema parsed_result
-        if (task.result) {
-          resultHTML = `<code>${task.result}</code>`;
-        }
+      } catch {
+        if (task.result) html = `<code>${task.result}</code>`;
       }
-
       return `
         <tr data-task-id="${task.id}">
           <td>${task.id}</td>
           <td>${task.type}</td>
           <td>${task.parameters}</td>
-          <td class="${statusClass}">${task.status}</td>
-          <td>${workerId}</td>
-          <td>${resultHTML}</td>
-        </tr>
-      `;
+          <td class="status-${task.status}">${task.status}</td>
+          <td>${task.worker_id||""}</td>
+          <td>${html}</td>
+        </tr>`;
     }
 
-    // Helper za kreiranje retka workera
-    function buildWorkerRow(worker) {
-      let cls = (worker.status === "Alive") ? "worker-alive" : "worker-offline";
+    function buildWorkerRow(w) {
+      const cls = w.status === "Alive" ? "worker-alive" : "worker-offline";
       return `
-        <tr data-worker-id="${worker.worker_id}">
-          <td>${worker.worker_id}</td>
-          <td class="${cls}">${worker.status}</td>
-          <td>${worker.last_seen}</td>
-        </tr>
-      `;
+        <tr data-worker-id="${w.worker_id}">
+          <td>${w.worker_id}</td>
+          <td class="${cls}">${w.status}</td>
+          <td>${w.last_seen}</td>
+        </tr>`;
     }
 
-    // Funkcija za dohvat statusa
     function refreshStatus() {
       fetch("/api/status")
-        .then(resp => resp.json())
-        .then(json => {
-          // Ažuriranje tablice zadataka
-          const taskBody = document.querySelector("#tasks-table tbody");
-          let newTasksHtml = "";
-          json.tasks.forEach(task => {
-            newTasksHtml += buildTaskRow(task);
-          });
-          taskBody.innerHTML = newTasksHtml;
-
-          // Ažuriranje tablice workera
-          const workerBody = document.querySelector("#workers-table tbody");
-          let newWorkersHtml = "";
-          json.workers.forEach(w => {
-            newWorkersHtml += buildWorkerRow(w);
-          });
-          workerBody.innerHTML = newWorkersHtml;
-        })
-        .catch(err => {
-          console.error("Error fetching /api/status:", err);
+        .then(r => r.json())
+        .then(d => {
+          document.querySelector("#tasks-table tbody")
+                  .innerHTML = d.tasks.map(buildTaskRow).join("");
+          document.querySelector("#workers-table tbody")
+                  .innerHTML = d.workers.map(buildWorkerRow).join("");
         });
     }
 
-    // Slanje novog zadatka (HTML forma)
-    document.getElementById("task-form").addEventListener("submit", function(e) {
+    document.getElementById("task-form")
+            .addEventListener("submit", e => {
       e.preventDefault();
-      const type = document.getElementById("task-type").value;
-      const params = document.getElementById("task-params").value.trim();
-      if (!type || !params) {
-        alert("Molim odaberi tip i unesi parametre.");
-        return;
-      }
-
+      const t = document.getElementById("task-type").value;
+      const p = document.getElementById("task-params").value.trim();
+      if (!t||!p) return alert("Molim odaberi tip i parametre.");
       fetch("/api/add_task", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ type: type, parameters: params })
+        headers: {"Content-Type":"application/json"},
+        body: JSON.stringify({type:t,parameters:p})
       })
-      .then(resp => resp.json())
-      .then(data => {
-        if (data.success) {
-          refreshStatus();
-          document.getElementById("task-params").value = "";
-        } else {
-          alert("Greška pri dodavanju zadatka: " + data.error);
-        }
-      })
-      .catch(err => {
-        console.error("Error adding task:", err);
-        alert("Greška pri komunikaciji sa serverom.");
+      .then(r=>r.json()).then(d=>{
+        if(d.success){ refreshStatus(); document.getElementById("task-params").value=""; }
+        else alert("Greška: "+d.error);
       });
     });
 
-    // Nakon učitavanja stranice, osvježavaj tablice svake 5 sekundi
-    document.addEventListener("DOMContentLoaded", function() {
+    document.addEventListener("DOMContentLoaded", _=>{
       refreshStatus();
       setInterval(refreshStatus, 5000);
     });
   </script>
+
 </body>
 </html>
